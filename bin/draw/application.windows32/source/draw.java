@@ -41,7 +41,8 @@ float arrowy;
 
 int num ;
 int numHigh;
-boolean[] highList;
+int[] highList;
+int[] highColors;
 boolean[][] adj;
 
 float minx;
@@ -71,7 +72,7 @@ float mx0,my0;
 String helpstring=" H - toggle this help message\n F - fit graph into window\n L - toggle labels on/off\n D - toggle dynamics on/off\n R - toggle repulsion on/off\n S - save & quit\n ESC - quit without saving";
 
 public void setup(){
-  size(600, 600);
+  
   importgraph();
   fill(fillcolor);
   strokeWeight(strokeweight);
@@ -145,11 +146,7 @@ public void dibuja(){
         noFill();
         ellipse(cx+x[i]/scale-radius,cy+y[i]/scale-radius,2.8284f*radius,2.8284f*radius); //2.8284 = 2*sqrt(2)
       }
-      if(highList[i]){
-        fill(fillhighcolor); 
-      }else{
-        fill(fillcolor);
-      }
+      fill(highColors[highList[i]]);
       ellipse(cx+x[i]/scale,cy+y[i]/scale,2*radius,2*radius);
 //labels      
       if(labels){
@@ -237,39 +234,52 @@ public void importgraph(){
    String[] lines = loadStrings(filename);
    String[] parts;
    num=PApplet.parseInt(lines[0]);
-   highList=new boolean[num];
+   highList=new int[num];
    x=new float[num]; y=new float[num];
    fx=new float[num];fy=new float[num];
    vx=new float[num];vy=new float[num];
    adj=new boolean[num][num];
-   for(int i=0;i<num;i++){
-     highList[i]=false;
+   
+   //construir coordenadas x,y
+   for(int i=0;i<num;i++){     
      parts = split(lines[i+1]," ");
      x[i]=PApplet.parseFloat(parts[0]);
      y[i]=PApplet.parseFloat(parts[1]);
    }
+   
+   //construir matriz de adyacencia
    for(int i=0;i<num;i++){
      for(int j=0;j<num;j++){
        adj[i][j]=(lines[i+num+1].charAt(j)=='1');
      }
-   }
+   }   
+   
+   //coloraciones posibles
    parts = split(lines[2*num+1]," ");
-   numHigh=PApplet.parseInt(parts[0]);
-   for(int i=0; i<numHigh; i++){
-     highList[PApplet.parseInt(parts[i+1])-1]=true;
+   highColors=new int[parts.length];
+   for(int i=0; i<highColors.length; i++){
+     highColors[i]=unhex("FF" + parts[i]);//#FF4444     
+   }   
+   
+   //indices de coloracion para cada vertice
+   parts = split(lines[2*num+2]," ");   
+   for(int i=0; i<num; i++){
+     highList[i]=PApplet.parseInt(parts[i]);
    }
 }
 
 public void exportgraph(){
-    String[] lines = new String[2*num+2];
+    String[] lines = new String[2*num+3];
     String[] parts = new String[2];
     char bits[] = new char[num];
     lines[0]=str(num);
+    //coordenadas
    for(int i=0;i<num;i++){
      parts[0]=str(PApplet.parseInt(cx+x[i]/scale-300));
      parts[1]=str(PApplet.parseInt(cy+y[i]/scale-300));
      lines[i+1]=join(parts," ");       
    }
+   //matriz de adyacencias
    for(int i=0;i<num;i++){
      for(int j=0;j<num;j++){
        if(adj[i][j]){
@@ -279,16 +289,22 @@ public void exportgraph(){
        }
      }
      lines[i+num+1]=new String(bits);
-   } 
-   parts= new String[numHigh+1];
-   parts[0] = str(numHigh);
-   int j=1;
-   for(int i=0;i<num;i++){
-     if(highList[i]){
-       parts[j++]=str(i+1);
-     }
+   }    
+   
+   //construccion de lista de colores
+   parts= new String[highColors.length];
+   for(int i=0; i<highColors.length; i++){
+     parts[i]=hex(highColors[i],6);
    }
    lines[2*num+1]=join(parts," ");
+   saveStrings(filename,lines);
+   
+   //construccion de indices de colores para cada vertice
+   parts= new String[num];      
+   for(int i=0;i<num;i++){     
+       parts[i]=str(highList[i]);     
+   }
+   lines[2*num+2]=join(parts," ");
    saveStrings(filename,lines);
 }
 
@@ -349,6 +365,7 @@ public void keyReleased(){
         break;
    } 
 }
+  public void settings() {  size(800, 800); }
   static public void main(String[] passedArgs) {
     String[] appletArgs = new String[] { "draw" };
     if (passedArgs != null) {

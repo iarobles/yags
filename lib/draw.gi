@@ -14,6 +14,9 @@
 ##
 
 YAGSInfo.Draw:=rec();
+YAGSInfo.Draw.Colors:=rec();
+YAGSInfo.Draw.Colors.fillColor:="BBBBFF";
+YAGSInfo.Draw.Colors.fillHighColor:="FF4444";
 if YAGSInfo.Arch=1 then #Unix (default)
    YAGSInfo.Draw.prog:=
         Concatenation(YAGSInfo.Directory,"/bin/draw/application.linux64/draw");
@@ -85,17 +88,25 @@ end);
 
 ############################################################################
 ##
+#M  GraphToRaw(<filename>, <G>, <HighlightedRecord> )
 #M  GraphToRaw(<filename>, <G>, <Highlighted> )
 #M  GraphToRaw(<filename>, <G> )
 ##
 InstallOtherMethod(GraphToRaw,"for graphs",true,[IsString,Graphs],0,
-function(filename, G) 
+function(filename, G)    
     GraphToRaw(filename, G, []); 
 end);
 
 InstallMethod(GraphToRaw,"for graphs",true,[IsString,Graphs,IsList],0,
-function(filename, G, Highlighted) 
-    local i,j,coord,v;
+function(filename,G, highlighted)   
+    GraphToRaw(filename,G,rec(       
+       (YAGSInfo.Draw.Colors.fillHighColor):= highlighted
+    ));
+end);
+
+InstallMethod(GraphToRaw,"for graphs",true,[IsString,Graphs,IsRecord],0,
+function(filename, G, highlightedRec) 
+    local i,j,coord,v,colors,color,colorIndex,coloredVertices;    
     PrintTo(filename,Order(G),"\n");
     if(IsBound(G!.Coordinates)) then 
       coord:=Coordinates(G);
@@ -116,10 +127,27 @@ function(filename, G, Highlighted)
       od;
       AppendTo(filename,"\n");
     od;
-    Highlighted:=Intersection(Highlighted,Vertices(G));
-    AppendTo(filename,Length(Highlighted)," ");
-    for v in Highlighted do 
-        AppendTo(filename,v," ");       
+    #prepare colors and colored vertices
+    colors:=Set(Concatenation([YAGSInfo.Draw.Colors.fillColor],RecNames(highlightedRec)));
+    colorIndex:=Position(colors, YAGSInfo.Draw.Colors.fillColor);
+    coloredVertices:=List([1..Order(G)],i->colorIndex);
+    for colorIndex in [1..Size(colors)] do    
+       color:=colors[colorIndex];   
+       if IsBound(highlightedRec.(color)) then
+          for v in highlightedRec.(color) do
+            coloredVertices[v] := colorIndex;
+          od;
+       fi;
+    od;
+    #insert color names    
+    for color in colors do 
+        AppendTo(filename,color," ");       
+    od;
+    AppendTo(filename,"\n");
+    #insert colored vertices
+    coloredVertices := coloredVertices-1; #zero based index for processing
+    for colorIndex in coloredVertices do 
+        AppendTo(filename,colorIndex," ");       
     od;
     AppendTo(filename,"\n");
 end);
