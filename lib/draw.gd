@@ -61,7 +61,8 @@ DeclareOperation("Coordinates",[Graphs]);
 ##  
 #O  GraphToRaw( <Filename>, <G> )
 #O  GraphToRaw( <FileName>, <G>, <Highlighted> )
-#O  GraphToRaw( <FileName>, <G>, <HighlightedRecord> )
+#O  GraphToRaw( <FileName>, <G>, <VertexColoringRecord> )
+#O  GraphToRaw( <FileName>, <G>, <VertexColoringRecord>, <EdgeColoringRecord>)
 ##  
 ##  <#GAPDoc Label="GraphToRaw">
 ##  <ManSection>
@@ -81,6 +82,7 @@ DeclareOperation("Coordinates",[Graphs]);
 ##  gap> GraphToRaw("mygraph.raw",g);
 ##  gap> GraphToRaw("mygraph2.raw",g,[1,2]);
 ##  gap> GraphToRaw("mygraph3.raw",g,rec(69D2E7:=[1,2]));
+##  gap> GraphToRaw("mygraph4.raw",g,rec(69D2E7:=[1,2,3]),rec(CD5C5C:=[[1,2],[3,4]]));
 ##  </Example>
 ##  
 ##  If <A>Highlighted</A> is not specified, it is assumed to be the
@@ -91,7 +93,7 @@ DeclareOperation("Coordinates",[Graphs]);
 ##  </ManSection>
 ##  <#/GAPDoc>
 DeclareOperation("GraphToRaw",[IsString,Graphs,IsList]);
-DeclareOperation("GraphToRaw",[IsString,Graphs,IsRecord]);
+DeclareOperation("GraphToRaw",[IsString,Graphs,IsRecord,IsRecord]);
 
 ############################################################################
 ##  
@@ -181,6 +183,6 @@ DeclareOperation("GraphUpdateFromRaw",[IsString,Graphs]);
 ##  </ManSection>
 ##  <#/GAPDoc>
 DeclareOperation("Draw",[Graphs,IsList]);
-#DeclareOperation("Draw",[Graphs,IsRecord]);
+DeclareOperation("Draw",[Graphs,IsRecord,IsRecord]);
     
 #E

@@ -15,8 +15,8 @@
 
 YAGSInfo.Draw:=rec();
 YAGSInfo.Draw.Colors:=rec();
-YAGSInfo.Draw.Colors.fillColor:="BBBBFF";
-YAGSInfo.Draw.Colors.fillHighColor:="FF4444";
+YAGSInfo.Draw.Colors.DEFAULT_FILL:="BBBBFF";
+YAGSInfo.Draw.Colors.DEFAULT_FILL_HIGHLIGHTED:="FF4444";
 if YAGSInfo.Arch=1 then #Unix (default)
    YAGSInfo.Draw.prog:=
         Concatenation(YAGSInfo.Directory,"/bin/draw/application.linux64/draw");
@@ -88,10 +88,19 @@ end);
 
 ############################################################################
 ##
-#M  GraphToRaw(<filename>, <G>, <HighlightedRecord> )
+#M  GraphToRaw(<filename>, <G>, <VertexColoringRecord>, <EdgeColoringRecord>)
+#M  GraphToRaw(<filename>, <G>, <VertexColoringRecord>)
 #M  GraphToRaw(<filename>, <G>, <Highlighted> )
 #M  GraphToRaw(<filename>, <G> )
 ##
+
+#posibles implementaciones:
+## list -> color default
+## list of list -> colores default
+## list, cadena -> sobreescribir color default
+## list of list, list -> colores para cada lista
+
+
 InstallOtherMethod(GraphToRaw,"for graphs",true,[IsString,Graphs],0,
 function(filename, G)    
     GraphToRaw(filename, G, []); 
@@ -99,14 +108,23 @@ end);
 
 InstallMethod(GraphToRaw,"for graphs",true,[IsString,Graphs,IsList],0,
 function(filename,G, highlighted)   
-    GraphToRaw(filename,G,rec(       
-       (YAGSInfo.Draw.Colors.fillHighColor):= highlighted
-    ));
+    local r;
+    if Length(highlighted)>0 then
+      r:=rec((YAGSInfo.Draw.Colors.DEFAULT_FILL_HIGHLIGHTED):= highlighted);
+    else 
+      r:=rec();
+    fi;
+    GraphToRaw(filename,G,r);
 end);
 
-InstallMethod(GraphToRaw,"for graphs",true,[IsString,Graphs,IsRecord],0,
-function(filename, G, highlightedRec) 
-    local i,j,coord,v,colors,color,colorIndex,coloredVertices;    
+InstallOtherMethod(GraphToRaw,"for graphs",true,[IsString,Graphs,IsRecord],0,
+function(filename,G, VertexColoringRecord)   
+    GraphToRaw(filename,G,VertexColoringRecord,rec());
+end);
+
+InstallMethod(GraphToRaw,"for graphs",true,[IsString,Graphs,IsRecord,IsRecord],0,
+function(filename, G, VertexColoringRecord, EdgeColoringRecord) 
+    local i,j,e,v,coord,colors,color,colorIndex,coloredVertices, coloredEdges,insertion;    
     PrintTo(filename,Order(G),"\n");
     if(IsBound(G!.Coordinates)) then 
       coord:=Coordinates(G);
@@ -127,29 +145,42 @@ function(filename, G, highlightedRec)
       od;
       AppendTo(filename,"\n");
     od;
-    #prepare colors and colored vertices
-    colors:=Set(Concatenation([YAGSInfo.Draw.Colors.fillColor],RecNames(highlightedRec)));
-    colorIndex:=Position(colors, YAGSInfo.Draw.Colors.fillColor);
-    coloredVertices:=List([1..Order(G)],i->colorIndex);
-    for colorIndex in [1..Size(colors)] do    
-       color:=colors[colorIndex];   
-       if IsBound(highlightedRec.(color)) then
-          for v in highlightedRec.(color) do
-            coloredVertices[v] := colorIndex;
-          od;
-       fi;
-    od;
-    #insert color names    
-    for color in colors do 
-        AppendTo(filename,color," ");       
+    #prepare colors
+    colors:=Set(Concatenation(RecNames(VertexColoringRecord),RecNames(EdgeColoringRecord)));            
+    for i in [1..Length(colors)] do
+      AppendTo(filename, colors[i]);
+      if i<Length(colors) then AppendTo(filename, " "); fi;
     od;
     AppendTo(filename,"\n");
-    #insert colored vertices
-    coloredVertices := coloredVertices-1; #zero based index for processing
-    for colorIndex in coloredVertices do 
-        AppendTo(filename,colorIndex," ");       
+    insertion := false;
+    for i in [1..Length(RecNames(VertexColoringRecord))] do
+      color := RecNames(VertexColoringRecord)[i];
+      colorIndex:=String(Position(colors,color)-1); #zero based index for processing
+      coloredVertices:=VertexColoringRecord.(color);
+      if insertion and Length(coloredVertices)>0 then AppendTo(filename," "); insertion:=false; fi;
+      for j in [1..Length(coloredVertices)] do
+        v:=coloredVertices[j];
+        AppendTo(filename,String(v-1),":",colorIndex);
+        if j<Length(coloredVertices) then AppendTo(filename, " "); fi;
+        insertion := true;
+      od;      
     od;
-    AppendTo(filename,"\n");
+    AppendTo(filename,"\n");    
+    #colored edges
+    insertion := false;
+    for i in [1..Length(RecNames(EdgeColoringRecord))] do
+      color := RecNames(EdgeColoringRecord)[i];
+      colorIndex:=String(Position(colors,color)-1); #zero based index for processing
+      coloredEdges:=EdgeColoringRecord.(color);
+      if insertion and Length(coloredEdges)>0 then AppendTo(filename," "); insertion:=false; fi;
+      for j in [1..Length(coloredEdges)] do
+        e:=coloredEdges[j];
+        AppendTo(filename,String(e[1]-1),",",String(e[2]-1),":",colorIndex); #zero based index for processing
+        if j<Length(coloredEdges) then AppendTo(filename, " "); fi;
+        insertion := true;
+      od;      
+    od;   
+    AppendTo(filename,"\n");    
 end);
 
 ############################################################################
@@ -176,6 +207,8 @@ end);
 ##
 #M  Draw( <G> )
 #M  Draw( <G>, <Highlighted> )
+#M  Draw( <G>, <VertexColoringRecord> )
+#M  Draw( <G>, <VertexColoringRecord>, <EdgeColoringRecord> )
 ##
 InstallOtherMethod(Draw,"for graphs",true,[Graphs],0,
 function(G) 
@@ -183,13 +216,26 @@ function(G)
 end);  
 InstallMethod(Draw,"for graphs",true,[Graphs,IsList],0,
 function(G,Highlighted)
+    local r;
+    if Length(Highlighted)>0 then
+      r:=rec((YAGSInfo.Draw.Colors.DEFAULT_FILL_HIGHLIGHTED):= Highlighted);
+    else 
+      r:=rec();
+    fi;  
+    Draw(G,r);
+end);
+InstallOtherMethod(Draw,"for graphs",true,[Graphs,IsRecord],0,
+function(G,VertexColoringRecord)
+    Draw(G,VertexColoringRecord,rec());
+end);
+InstallOtherMethod(Draw,"for graphs",true,[Graphs,IsRecord,IsRecord],0,
+function(G,VertexColoringRecord, EdgeColoringRecord)
     local filename,dir,opts;
     filename:="drawgraph.raw";
-    GraphToRaw(filename,G,Highlighted);
+    GraphToRaw(filename,G,VertexColoringRecord,EdgeColoringRecord);
     dir:=DirectoryCurrent();
     Process(dir,YAGSInfo.Draw.prog,InputTextNone(),OutputTextUser(),YAGSInfo.Draw.opts);
     GraphUpdateFromRaw(filename,G);
 end);
-
 #E
 
