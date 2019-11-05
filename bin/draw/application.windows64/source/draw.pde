@@ -1,5 +1,5 @@
 import java.util.Map;
-String filename = "drawgraph.raw";
+String filename = System.getProperty("user.dir") + File.separator + "drawgraph.raw";
 float[] x;
 float[] y;
 float[] vx;
@@ -235,7 +235,7 @@ void posiciones(){
   } 
 }
 
-void importgraph(){
+void importgraph(){  
    String[] lines = loadStrings(filename);
    String[] parts, subparts;
    num=int(lines[0]);
@@ -243,7 +243,8 @@ void importgraph(){
    fx=new float[num];fy=new float[num];
    vx=new float[num];vy=new float[num];
    adj=new boolean[num][num];     
-   
+      
+   print("import filename:" + filename + "\n");
    //construir coordenadas x,y
    for(int i=0;i<num;i++){     
      parts = split(lines[i+1]," ");
@@ -261,14 +262,14 @@ void importgraph(){
    //coloracion de vertices
    if(lines.length>=2*num+3){     
      //coloraciones posibles
-     parts = split(lines[2*num+1]," ");
+     parts = splitTokens(lines[2*num+1]," ");
      colors=new color[parts.length];
      for(int i=0; i<colors.length; i++){
        colors[i]=unhex("FF" + parts[i]);//#FF4444     
      }   
      
      //indices de coloracion para cada vertice
-     parts = split(lines[2*num+2]," ");   
+     parts = splitTokens(lines[2*num+2]," ");     
      for(int i=0; i<parts.length; i++){
        subparts = split(parts[i],":");
        //put(vertexNumber, index of array of Colors)
@@ -279,7 +280,7 @@ void importgraph(){
    //coloracion de aristas
    if(lines.length>=2*num+4){
      //indices de coloracion para cada arista
-     parts = split(lines[2*num+3]," ");
+     parts = splitTokens(lines[2*num+3]," ");
      for(int i=0; i<parts.length; i++){
        subparts = split(parts[i],":");
        //put(edge as string, index of array of Colors)
@@ -293,16 +294,20 @@ void exportgraph(){
     char bits[] = new char[num];
     String[] lines;
     int index;
-    
-    if(vertexColoring.size()>0 && edgeColoring.size()>0){
+    print("export filename:" + filename + "\n");
+    print("num:"+ num + "\n");    
+    if(vertexColoring.size()>0 && edgeColoring.size()>0){      
       lines = new String[2*num+4];
+      print("1 lines.length:"+ lines.length);
     } else if(vertexColoring.size()>0 && edgeColoring.size()==0){
       lines = new String[2*num+3];
+      print("2 lines.length:"+ lines.length);
     } else {
        lines = new String[2*num+1];
+       print("3 lines.length:"+ lines.length);
     }
-    
-     
+    print("\n vertexColoring.size():" + vertexColoring.size() + ", edgeColoring.size():" + edgeColoring.size() + "\n");
+         
     lines[0]=str(num);
     //coordenadas
      for(int i=0;i<num;i++){
@@ -323,7 +328,8 @@ void exportgraph(){
      }    
      
      //coloracion de vertices
-     if(colors!=null){
+     if(vertexColoring.size()>0){
+       print("making colors: \n");
        parts= new String[colors.length];
        for(int i=0; i<colors.length; i++){
          parts[i]=hex(colors[i],6);
@@ -341,7 +347,8 @@ void exportgraph(){
      }         
      
      //coloracion de aristas     
-     if(edgeColoring.size()>0){     
+     if(edgeColoring.size()>0){ //<>//
+       print("making edges: \n");
        //construccion de indices de colores para cada arista
        parts= new String[edgeColoring.size()];
        index=0;       
@@ -350,7 +357,8 @@ void exportgraph(){
          index=index+1;
        }
        lines[2*num+3]=join(parts," ");
-     }     
+     } 
+     print("saving \n");
      saveStrings(filename,lines);
 }
 
