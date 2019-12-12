@@ -53,10 +53,10 @@ float maxx;
 float miny;
 float maxy;
 float scale=1;
-int canvasWidth = 600;
-int canvasHeight = 600;
-float centerX=300;
-float centerY=300;
+int canvasWidth = 1200; //default canvas width
+int canvasHeight = 800;//default canvas height
+float centerX=canvasWidth/2;
+float centerY=canvasHeight/2;
 float cx=centerX;
 float cy=centerY;
 float deltascale=1.05f;
@@ -78,17 +78,30 @@ boolean move=false;
 float mx0,my0;
 String helpstring=" H - toggle this help message\n F - fit graph into window\n L - toggle labels on/off\n D - toggle dynamics on/off\n R - toggle repulsion on/off\n S - save & quit\n ESC - quit without saving";
 
-public void setup(){
-  
+public void setup(){    
+  //size(1,1);
+  //surface.setResizable(true);
+  surface.setSize(canvasWidth, canvasHeight);       
   importgraph();
   fill(fillcolor);
   strokeWeight(strokeweight);
   textAlign(CENTER,CENTER);
-  textSize(10);
+  textSize(10);    
 }
 
 public void draw(){
-     background(255);
+    /*
+     if(width!=canvasWidth || height!=canvasHeight){
+       print("old width:" + canvasWidth + "\n");
+       print("old height:" + canvasHeight + "\n");
+       print("new width:" + width + "\n");
+       print("new height:" + height + "\n");
+       canvasWidth=width;
+       canvasHeight=height;
+       surface.setSize(canvasWidth, canvasHeight);
+     }
+     */
+     background(255);          
      //rotate(PI/12);
      //translate(200,200);
      if(sel>=0){
@@ -100,7 +113,7 @@ public void draw(){
        cy=cy+(mouseY-my0);my0=mouseY;
      }
      if(fit){
-      fitgraph();
+      fitgraph(); //<>//
     }
     if(dynamics){
        fuerzas();
@@ -262,7 +275,6 @@ public void importgraph(){
    vx=new float[num];vy=new float[num];
    adj=new boolean[num][num];     
       
-   print("import filename:" + filename + "\n");
    //construir coordenadas x,y
    for(int i=0;i<num;i++){     
      parts = split(lines[i+1]," ");
@@ -312,7 +324,6 @@ public void exportgraph(){
     char bits[] = new char[num];
     String[] lines;
     int index;
-    print("export filename:" + filename + "\n");
     print("num:"+ num + "\n");    
     if(vertexColoring.size()>0 && edgeColoring.size()>0){      
       lines = new String[2*num+4];
@@ -365,7 +376,7 @@ public void exportgraph(){
      }         
      
      //coloracion de aristas     
-     if(edgeColoring.size()>0){ //<>//
+     if(edgeColoring.size()>0){
        print("making edges: \n");
        //construccion de indices de colores para cada arista
        parts= new String[edgeColoring.size()];
@@ -386,8 +397,8 @@ public void fitgraph(){
      }else if(num==1){
        cx=centerX-x[0]/scale;
        cy=centerY-y[0]/scale;
-     }else{
-       minx= 1000000;
+     }else{ //<>//
+       minx= 1000000; //<>//
        maxx=-1000000;
        miny= 1000000;
        maxy=-1000000;
@@ -398,7 +409,7 @@ public void fitgraph(){
          maxy=max(y[i],maxy);
        }
        l=max(maxy-miny,maxx-minx);
-       scale=l/(canvasWidth*0.8f);
+       scale=l/(width*0.8f);
        mx=minx+(maxx-minx)/2;
        my=miny+(maxy-miny)/2;
        cx=centerX-mx/scale;
@@ -437,7 +448,6 @@ public void keyReleased(){
         break;
    } 
 }
-  public void settings() {  size(600, 600); }
   static public void main(String[] passedArgs) {
     String[] appletArgs = new String[] { "draw" };
     if (passedArgs != null) {
