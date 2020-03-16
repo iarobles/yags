@@ -85,7 +85,7 @@ DeclareOperation("Coordinates",[Graphs]);
 ##  gap> GraphToRaw("mygraph4.raw",g,rec(69D2E7:=[1,2,3]),rec(CD5C5C:=[[1,2],[3,4]]));
 ##  </Example>
 ##  
-##  If <A>Highlighted</A> is not specified, it is assumed to be the
+##  If <A>Highlighted</A> is not specified, it is assumed to be an
 ##  empty list. The vertices listed in <A>Highlighted</A> are drawn in
 ##  a highlighted color by <C>Draw()</C>. 
 ##  

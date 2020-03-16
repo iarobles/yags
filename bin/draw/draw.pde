@@ -35,8 +35,8 @@ float maxx;
 float miny;
 float maxy;
 float scale=1;
-int canvasWidth = 1200; //default canvas width
-int canvasHeight = 800;//default canvas height
+int canvasWidth = 600; //default canvas width
+int canvasHeight = 600;//default canvas height
 float centerX=canvasWidth/2;
 float centerY=canvasHeight/2;
 float cx=centerX;

@@ -94,13 +94,6 @@ end);
 #M  GraphToRaw(<filename>, <G> )
 ##
 
-#posibles implementaciones:
-## list -> color default
-## list of list -> colores default
-## list, cadena -> sobreescribir color default
-## list of list, list -> colores para cada lista
-
-
 InstallOtherMethod(GraphToRaw,"for graphs",true,[IsString,Graphs],0,
 function(filename, G)    
     GraphToRaw(filename, G, []); 
