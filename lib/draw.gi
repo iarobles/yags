@@ -226,9 +226,13 @@ function(G,VertexColoringRecord, EdgeColoringRecord)
     local filename,dir,opts;
     filename:="drawgraph.raw";
     GraphToRaw(filename,G,VertexColoringRecord,EdgeColoringRecord);
-    dir:=DirectoryCurrent();
-    Process(dir,YAGSInfo.Draw.prog,InputTextNone(),OutputTextUser(),YAGSInfo.Draw.opts);
-    GraphUpdateFromRaw(filename,G);
+    if YAGSInfo.IsOnJupiter then
+      
+    else
+      dir:=DirectoryCurrent();
+      Process(dir,YAGSInfo.Draw.prog,InputTextNone(),OutputTextUser(),YAGSInfo.Draw.opts);
+      GraphUpdateFromRaw(filename,G);
+    fi;
 end);
 #E
 

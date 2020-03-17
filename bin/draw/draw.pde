@@ -306,18 +306,18 @@ void exportgraph(){
     char bits[] = new char[num];
     String[] lines;
     int index;
-    print("num:"+ num + "\n");    
+    //print("num:"+ num + "\n");    
     if(vertexColoring.size()>0 && edgeColoring.size()>0){      
       lines = new String[2*num+4];
-      print("1 lines.length:"+ lines.length);
+      //print("1 lines.length:"+ lines.length);
     } else if(vertexColoring.size()>0 && edgeColoring.size()==0){
       lines = new String[2*num+3];
-      print("2 lines.length:"+ lines.length);
+      //print("2 lines.length:"+ lines.length);
     } else {
        lines = new String[2*num+1];
-       print("3 lines.length:"+ lines.length);
+       //print("3 lines.length:"+ lines.length);
     }
-    print("\n vertexColoring.size():" + vertexColoring.size() + ", edgeColoring.size():" + edgeColoring.size() + "\n");
+    //print("\n vertexColoring.size():" + vertexColoring.size() + ", edgeColoring.size():" + edgeColoring.size() + "\n");
          
     lines[0]=str(num);
     //coordenadas
@@ -340,7 +340,7 @@ void exportgraph(){
      
      //coloracion de vertices
      if(vertexColoring.size()>0){
-       print("making colors: \n");
+       //print("making colors: \n");
        parts= new String[colors.length];
        for(int i=0; i<colors.length; i++){
          parts[i]=hex(colors[i],6);
@@ -359,7 +359,7 @@ void exportgraph(){
      
      //coloracion de aristas     
      if(edgeColoring.size()>0){
-       print("making edges: \n");
+       //print("making edges: \n");
        //construccion de indices de colores para cada arista
        parts= new String[edgeColoring.size()];
        index=0;       
@@ -369,7 +369,7 @@ void exportgraph(){
        }
        lines[2*num+3]=join(parts," ");
      } 
-     print("saving \n");
+     //print("saving \n");
      saveStrings(filename,lines);
 }
 

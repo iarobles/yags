@@ -1,5 +1,6 @@
 
-var filename = "drawgraph.raw";
+var filename = "drawgraph";
+var extFilename = "raw";
 
 var x;
 var y;
@@ -26,8 +27,10 @@ var arrowy;
 
 var num ;
 var numHigh;
-var vertexColoring={};   
+var vertexColoring={}; 
+var vertexColoringSize=0;  
 var edgeColoring={};
+var edgeColoringSize=0;
 var vars;
 var adj;
 var minx;
@@ -47,7 +50,8 @@ var strokewextra=8;
 var radius=6;
 var mradius=16;
 var bgcolor="#FFFFFF";
-var helpcolor="#BBBBBB";
+//var helpcolor="#BBBBBB";
+var helpcolor;
 var fillcolor="#BBBBFF";
 var fillhighcolor="#FF4444";
 var circpencolor="#444444";
@@ -58,20 +62,24 @@ var labels = false;
 var fit=false;
 var move=false;
 var mx0,my0;
-var helpstring=" H - toggle this help message\n F - fit graph varo window\n L - toggle labels on/off\n D - toggle dynamics on/off\n R - toggle repulsion on/off\n S - save & quit\n ESC - quit without saving";
+var helpstring=" H - toggle this help message\n F - fit graph into window\n L - toggle labels on/off\n D - toggle dynamics on/off\n R - toggle repulsion on/off\n S - save & quit\n ESC - quit without saving";
 
 var lines;
    
 function preload(){
-   lines = loadStrings(filename);
-   console.log(lines);
+   lines = loadStrings(filename + "." + extFilename);
+   //console.log(lines);
 }
 
 function setup() {
   // put setup code here
-  var arrowangle=radians(20.0);
+  //in order to fill some variables with the result of some processing function, p5js requires you to fill
+  //such variable here, in the setup function
+  arrowangle=radians(20.0);
+  helpcolor=color(187,187,187,200);
 
-  console.log(lines);
+
+  //console.log(lines);
 
   var cnv = createCanvas(canvasWidth, canvasHeight);       
   cnv.mouseWheel(mouseWheelListener);
@@ -87,12 +95,12 @@ function setup() {
 
 function draw() {
 
-       background(255);          
+     background(255);          
      //rotate(PI/12);
      //translate(200,200);
      if(sel>=0){
-       x[sel]=(mouseX-cx)*scale;
-       y[sel]=(mouseY-cy)*scale;
+       x[sel]=(mouseX-cx)*theScale;
+       y[sel]=(mouseY-cy)*theScale;
      }
      if(move){
        cx=cx+(mouseX-mx0);mx0=mouseX;
@@ -101,13 +109,13 @@ function draw() {
      if(fit){
       fitgraph(); //<>//
     }
-    if(dynamics){
-       fuerzas();
-       posiciones();
+    if(dynamics){    	
+       forceDynamics();
+       vertexPositions();
     } 
-    dibuja();
+    drawGraph();
     if(help){
-      fill(helpcolor,200);
+      fill(helpcolor);
         rect(0,0,252,191);
       fill(textcolor);
       textAlign(LEFT,TOP);
@@ -121,13 +129,13 @@ function draw() {
 
 
 
-function dibuja(){
+function drawGraph(){
     var edgeColor;
-//edges
+    //edges
     for(var i=0;i<num;i++){
       for( var j=i+1;j<num;j++){
         if (adj[i][j] || adj[j][i]){          
-          
+            
             if(adj[i][j] && adj[j][i]  && edgeColoring[i + "," + j]!=null){//edge color i<->j
               edgeColor = colors[edgeColoring[i + "," + j]];
             }else if (adj[i][j] && adj[j][i]  && edgeColoring[j + "," + i]!=null){//edge color i<->j              
@@ -142,7 +150,7 @@ function dibuja(){
             stroke(edgeColor);
             strokeWeight(strokeweight);
             // i--j (no arrows)
-            line(cx+x[i]/scale,cy+y[i]/theScale,cx+x[j]/theScale,cy+y[j]/theScale);
+            line(cx+x[i]/theScale,cy+y[i]/theScale,cx+x[j]/theScale,cy+y[j]/theScale);
           if (!adj[j][i]){ // i->j
              auxangle= atan2(y[j]-y[i],x[j]-x[i]);
              arrowx= cx+(arrowposition*x[j]+(1-arrowposition)*x[i])/theScale;
@@ -159,7 +167,7 @@ function dibuja(){
         }
       }
     }
-//vertices
+    //vertices
     stroke(circpencolor);
     for(var i=0;i<num;i++){
       if(adj[i][i]){
@@ -172,7 +180,7 @@ function dibuja(){
         fill(fillcolor);
       }
       ellipse(cx+x[i]/theScale,cy+y[i]/theScale,2*radius,2*radius);
-//labels      
+      //labels      
       if(labels){
         fill(textcolor); 
         text(str(i+1),cx+x[i]/theScale,cy+y[i]/theScale);
@@ -201,16 +209,19 @@ function mouseReleasedListener(){
 
 function mouseWheelListener(event) {
   var scale1;
-  var e = event.deltaY;
+  var e = event.deltaY/50;
+  
   scale1=theScale/pow(deltascale,e);
   cx=mouseX-(mouseX-cx)*(theScale/scale1);
   cy=mouseY-(mouseY-cy)*(theScale/scale1);
   theScale=scale1;
+
 }
 
-function fuerzas(){
+function forceDynamics(){
   var ffx,ffy,d,f,xp,yp;
   var i,j;
+  
   for(i=0;i<num;i++){
     ffx=0;ffy=0;
     for(j=0;j<num;j++){
@@ -236,7 +247,7 @@ function fuerzas(){
       //resistencia
       ffx=ffx-atte*vx[i];
       ffy=ffy-atte*vy[i];
-    }
+    }    
     fx[i]=ffx;
     fy[i]=ffy;
   }
@@ -244,7 +255,7 @@ function fuerzas(){
 
 
 
-function posiciones(){
+function vertexPositions(){
   var ffx,ffy,l,t;
   var i,j;
   for(i=0;i<num;i++){
@@ -261,9 +272,10 @@ function posiciones(){
 function importgraph(){     
    var parts, subparts;
    num=int(lines[0]);
-   x=new Array(num); y=new Array(num);
-   fx=new Array(num);fy=new Array(num);
-   vx=new Array(num);vy=new Array(num);
+   x=new Array(num).fill(0); y=new Array(num).fill(0);
+   fx=new Array(num).fill(0);fy=new Array(num).fill(0);
+   vx=new Array(num).fill(0);vy=new Array(num).fill(0);
+
    adj=new Array(num).fill(0).map(() => new Array(num).fill(0));
       
    //construir coordenadas x,y
@@ -286,7 +298,7 @@ function importgraph(){
      parts = splitTokens(lines[2*num+1]," ");
      colors=new Array(parts.length);
      for(var i=0; i<colors.length; i++){
-       colors[i]=unhex("FF" + parts[i]);//#FF4444     
+       colors[i]="#" + parts[i];//#FF4444     
      }   
      
      //indices de coloracion para cada vertice
@@ -294,8 +306,9 @@ function importgraph(){
      for(var i=0; i<parts.length; i++){
        subparts = split(parts[i],":");
        //put(vertexNumber, index of array of Colors)
-       vertexColoring[int(subparts[0])]= int(subparts[1]);
+       vertexColoring[int(subparts[0])]= int(subparts[1]);       
      }
+     vertexColoringSize=parts.length;
    }
    
    //coloracion de aristas
@@ -307,13 +320,94 @@ function importgraph(){
        //put(edge as string, index of array of Colors)
        edgeColoring[subparts[0]]=int(subparts[1]);
      }
+     edgeColoringSize=parts.length;
    }   
 
-   console.log(edgeColoring);
-   console.log(vertexColoring);
+   //console.log(edgeColoring);
+   //console.log(vertexColoring);
+   
 
 }
 
+
+
+function exportgraph(){  
+    var parts = new Array(2).fill("");
+    var bits = new Array(num).fill('');
+    var lines=[];
+    var index;
+    //print("num:"+ num + "\n");    
+
+    if(vertexColoringSize>0 && edgeColoringSize>0){      
+      lines = new Array(2*num+4);
+      //print("1 lines.length:"+ lines.length);
+    } else if(vertexColoringSize>0 && edgeColoringSize==0){
+      lines = new Array(2*num+3);
+      //print("2 lines.length:"+ lines.length);
+    } else {
+       lines = new Array(2*num+1);
+       //print("3 lines.length:"+ lines.length);
+    }
+    //print("\n vertexColoring.size():" + vertexColoring.size() + ", edgeColoring.size():" + edgeColoring.size() + "\n");
+         
+    lines[0]=str(num);
+    //coordenadas
+     for(var i=0;i<num;i++){
+       parts[0]=str(int(cx+x[i]/theScale-centerX));
+       parts[1]=str(int(cy+y[i]/theScale-centerY));
+       lines[i+1]=join(parts," ");       
+     }
+     //matriz de adyacencias
+     for(var i=0;i<num;i++){
+       for(var j=0;j<num;j++){
+         if(adj[i][j]){
+           bits[j]='1';
+         }else{
+           bits[j]='0';
+         }
+       }
+       lines[i+num+1]=join(bits,"");
+     }    
+     
+     //coloracion de vertices
+     if(vertexColoringSize>0){
+       //print("making colors: \n");
+       parts= new Array(colors.length);
+       for(var i=0; i<colors.length; i++){
+         parts[i]=colors[i].substring(1,colors[i].length);
+       }
+       lines[2*num+1]=join(parts," ");     
+       
+       //construccion de indices de colores para cada vertice
+       parts= new Array(vertexColoringSize);
+       index=0;
+       for (var e in vertexColoring) {
+       	 if(vertexColoring.hasOwnProperty(e)){
+       	 	parts[index]=e + ":" + vertexColoring[e];
+       	 	index=index+1;
+       	 }
+       }
+       lines[2*num+2]=join(parts," ");             
+     }         
+     
+     //coloracion de aristas     
+     if(edgeColoringSize>0){
+       //print("making edges: \n");
+       //construccion de indices de colores para cada arista
+       parts= new Array(edgeColoringSize);
+       index=0;       
+       for (var e in edgeColoring) {         
+       	 if(edgeColoring.hasOwnProperty(e)){
+            parts[index]=e + ":" + edgeColoring[e];         
+            index=index+1;
+         }
+       }
+       lines[2*num+3]=join(parts," ");
+     } 
+     //print("saving \n");
+     //console.log(lines);
+     saveStrings(lines,filename,extFilename);
+}
 
 
 function fitgraph(){
@@ -369,7 +463,7 @@ function keyReleased(){
         break;
       case 's':
       case 'S':
-        //exportgraph();exit();
+        exportgraph();
         break;
    } 
 }
