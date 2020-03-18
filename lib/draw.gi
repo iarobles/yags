@@ -205,7 +205,11 @@ end);
 ##
 InstallOtherMethod(Draw,"for graphs",true,[Graphs],0,
 function(G) 
+  if YAGSInfo.IsOnJupiter then      
+    return Draw(G,[]);
+  else
     Draw(G,[]);
+  fi;
 end);  
 InstallMethod(Draw,"for graphs",true,[Graphs,IsList],0,
 function(G,Highlighted)
@@ -215,24 +219,40 @@ function(G,Highlighted)
     else 
       r:=rec();
     fi;  
-    Draw(G,r);
+
+    if YAGSInfo.IsOnJupiter then      
+       return Draw(G,r);
+    else
+       Draw(G,r);
+    fi;
 end);
 InstallOtherMethod(Draw,"for graphs",true,[Graphs,IsRecord],0,
 function(G,VertexColoringRecord)
+  if YAGSInfo.IsOnJupiter then      
+    return Draw(G,VertexColoringRecord,rec());
+  else
     Draw(G,VertexColoringRecord,rec());
+  fi;
 end);
 InstallOtherMethod(Draw,"for graphs",true,[Graphs,IsRecord,IsRecord],0,
 function(G,VertexColoringRecord, EdgeColoringRecord)
-    local filename,dir,opts;
+    local filename,dir,opts,template;
     filename:="drawgraph.raw";
     GraphToRaw(filename,G,VertexColoringRecord,EdgeColoringRecord);
-    if YAGSInfo.IsOnJupiter then
-      
+    if YAGSInfo.IsOnJupiter then                
+      template:=ReadAll(InputTextFile(Concatenation(YAGSInfo.Directory,"/bin/draw/p5js/draw-template.html")));            
+      return Objectify( EvalString("JupyterRenderableType"), 
+                        rec(
+                           source:= "gap",
+                           data:=rec(("text/html"):=template),
+                           metadata:=rec() 
+                        )
+             );      
     else
       dir:=DirectoryCurrent();
       Process(dir,YAGSInfo.Draw.prog,InputTextNone(),OutputTextUser(),YAGSInfo.Draw.opts);
       GraphUpdateFromRaw(filename,G);
-    fi;
+    fi;    
 end);
 #E
 

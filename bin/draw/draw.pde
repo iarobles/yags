@@ -60,9 +60,7 @@ boolean move=false;
 float mx0,my0;
 String helpstring=" H - toggle this help message\n F - fit graph into window\n L - toggle labels on/off\n D - toggle dynamics on/off\n R - toggle repulsion on/off\n S - save & quit\n ESC - quit without saving";
 
-void setup(){    
-  //size(1,1);
-  //surface.setResizable(true);
+void setup(){      
   surface.setSize(canvasWidth, canvasHeight);       
   importgraph();
   fill(fillcolor);
@@ -72,17 +70,7 @@ void setup(){
 }
 
 void draw(){
-    /*
-     if(width!=canvasWidth || height!=canvasHeight){
-       print("old width:" + canvasWidth + "\n");
-       print("old height:" + canvasHeight + "\n");
-       print("new width:" + width + "\n");
-       print("new height:" + height + "\n");
-       canvasWidth=width;
-       canvasHeight=height;
-       surface.setSize(canvasWidth, canvasHeight);
-     }
-     */
+    
      background(255);          
      //rotate(PI/12);
      //translate(200,200);
@@ -249,6 +237,7 @@ void posiciones(){
 }
 
 void importgraph(){  
+   print(filename);
    String[] lines = loadStrings(filename);
    String[] parts, subparts;
    num=int(lines[0]);
@@ -257,30 +246,30 @@ void importgraph(){
    vx=new float[num];vy=new float[num];
    adj=new boolean[num][num];     
       
-   //construir coordenadas x,y
+   //build coordinates "x" and "y"
    for(int i=0;i<num;i++){     
      parts = split(lines[i+1]," ");
      x[i]=float(parts[0]);
      y[i]=float(parts[1]);
    }
    
-   //construir matriz de adyacencia
+   //build adjacency matrix
    for(int i=0;i<num;i++){
      for(int j=0;j<num;j++){
        adj[i][j]=(lines[i+num+1].charAt(j)=='1');
      }
    }   
    
-   //coloracion de vertices
+   //colors
    if(lines.length>=2*num+3){     
-     //coloraciones posibles
+     //build an array of the colors used for this graph
      parts = splitTokens(lines[2*num+1]," ");
      colors=new color[parts.length];
      for(int i=0; i<colors.length; i++){
        colors[i]=unhex("FF" + parts[i]);//#FF4444     
      }   
      
-     //indices de coloracion para cada vertice
+     //build an array for vertex coloring
      parts = splitTokens(lines[2*num+2]," ");     
      for(int i=0; i<parts.length; i++){
        subparts = split(parts[i],":");
@@ -289,9 +278,8 @@ void importgraph(){
      }
    }
    
-   //coloracion de aristas
-   if(lines.length>=2*num+4){
-     //indices de coloracion para cada arista
+   //build an array for edge coloring
+   if(lines.length>=2*num+4){     
      parts = splitTokens(lines[2*num+3]," ");
      for(int i=0; i<parts.length; i++){
        subparts = split(parts[i],":");
@@ -306,27 +294,23 @@ void exportgraph(){
     char bits[] = new char[num];
     String[] lines;
     int index;
-    //print("num:"+ num + "\n");    
+        
     if(vertexColoring.size()>0 && edgeColoring.size()>0){      
-      lines = new String[2*num+4];
-      //print("1 lines.length:"+ lines.length);
+      lines = new String[2*num+4];    
     } else if(vertexColoring.size()>0 && edgeColoring.size()==0){
       lines = new String[2*num+3];
-      //print("2 lines.length:"+ lines.length);
     } else {
        lines = new String[2*num+1];
-       //print("3 lines.length:"+ lines.length);
     }
-    //print("\n vertexColoring.size():" + vertexColoring.size() + ", edgeColoring.size():" + edgeColoring.size() + "\n");
          
     lines[0]=str(num);
-    //coordenadas
+    //coordinates
      for(int i=0;i<num;i++){
        parts[0]=str(int(cx+x[i]/scale-centerX));
        parts[1]=str(int(cy+y[i]/scale-centerY));
        lines[i+1]=join(parts," ");       
      }
-     //matriz de adyacencias
+     //adjacency matrix
      for(int i=0;i<num;i++){
        for(int j=0;j<num;j++){
          if(adj[i][j]){
@@ -338,16 +322,16 @@ void exportgraph(){
        lines[i+num+1]=new String(bits);
      }    
      
-     //coloracion de vertices
+     //colors
      if(vertexColoring.size()>0){
-       //print("making colors: \n");
+       //build a codification for all colors used for this graph
        parts= new String[colors.length];
        for(int i=0; i<colors.length; i++){
          parts[i]=hex(colors[i],6);
        }
        lines[2*num+1]=join(parts," ");     
        
-       //construccion de indices de colores para cada vertice
+       //build a codification for vertex coloring
        parts= new String[vertexColoring.size()];
        index=0;
        for (Map.Entry<Integer, Integer> e : vertexColoring.entrySet()) {
@@ -357,10 +341,8 @@ void exportgraph(){
        lines[2*num+2]=join(parts," ");             
      }         
      
-     //coloracion de aristas     
+     //build a codification for edge coloring
      if(edgeColoring.size()>0){
-       //print("making edges: \n");
-       //construccion de indices de colores para cada arista
        parts= new String[edgeColoring.size()];
        index=0;       
        for (Map.Entry<String, Integer> e : edgeColoring.entrySet()) {         
@@ -368,8 +350,7 @@ void exportgraph(){
          index=index+1;
        }
        lines[2*num+3]=join(parts," ");
-     } 
-     //print("saving \n");
+     }      
      saveStrings(filename,lines);
 }
 
