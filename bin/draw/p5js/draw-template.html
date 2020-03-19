@@ -16,6 +16,11 @@
 </div>
 <!--
 <script src="//cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.js"></script>
+<script
+  src="https://code.jquery.com/jquery-3.4.1.slim.min.js"
+  integrity="sha256-pasqAKBDmFT4eHoN2ndd6lN370kFiGUFyTiUHWhU7k8="
+  crossorigin="anonymous">
+</script>
 -->
 <script>
 
@@ -25,10 +30,11 @@
     }
   });
 
-  require(["p5jsyags"],function(p5){
+  require(["p5jsyags"],function(p5){  
 
     const s = function( sketch ) {              
         var ID_YAGS_DRAW_CONTAINER;
+        var ID_YAGS_DRAW_CANVAS;
         var filename = "drawgraph";
         var extFilename = "raw";
         var x;
@@ -91,13 +97,15 @@
         var fit=false;
         var move=false;
         var mx0,my0;
-        var helpstring=" H - toggle this help message\n F - fit graph into window\n L - toggle labels on/off\n D - toggle dynamics on/off\n R - toggle repulsion on/off\n S - save & quit\n ESC - quit without saving";
+        var helpstring=" H - toggle this help message\n F - fit graph into window\n L - toggle labels on/off\n D - toggle dynamics on/off\n R - toggle repulsion on/off\n S - save\n";
 
         var lines;
+        var isUserUsingCanvas=false;
            
         sketch.preload=function(){
-           ID_YAGS_DRAW_CONTAINER = new Date().getTime();//generate a unique container id for this draw execution                      
-           sketch.select("#id-template").id(ID_YAGS_DRAW_CONTAINER); //replace the current container id
+           ID_YAGS_DRAW_CONTAINER = new Date().getTime();//generate a unique id for container
+           ID_YAGS_DRAW_CANVAS="canvas"+ID_YAGS_DRAW_CONTAINER; //generate a unique id for canvas tag
+           sketch.select("#id-template").id(ID_YAGS_DRAW_CONTAINER); //replace current container id                      
            lines = sketch.loadStrings(filename + "." + extFilename); //read the graph raw           
         };
 
@@ -108,12 +116,24 @@
           arrowangle=sketch.radians(20.0);
           helpcolor=sketch.color(187,187,187,200);
 
-          var cnv = sketch.createCanvas(canvasWidth, canvasHeight);       
-          cnv.id("canvas"+ID_YAGS_DRAW_CONTAINER);//set a unique id for canvas tag         
+          var cnv = sketch.createCanvas(canvasWidth, canvasHeight);                 
+          cnv.id(ID_YAGS_DRAW_CANVAS);//set a unique id for canvas tag         
           cnv.parent("#"+ID_YAGS_DRAW_CONTAINER); //set a unique parent container
           cnv.mouseWheel(mouseWheelListener);
           cnv.mouseReleased(mouseReleasedListener);
           cnv.mousePressed(mousePressedListener);
+
+          var jcnv=$("#"+ID_YAGS_DRAW_CANVAS);//get the canvas as a jquery object
+          //IMPORTANT: a canvas without a tabindex property doesn't trigger the "focusin" and "focusout" events. 
+          //           The method: Jupiter.keyboard_manager.register_events uses focusin/focusout" events
+          //           to enable/disable keyboard shortcuts.
+          jcnv.attr("tabindex","1");
+          //disable/enable jupiter keyboard shortcuts when this canvas triggers focusin/focusout events          
+          Jupyter.keyboard_manager.register_events();
+          //enable yags draw keyboard shortcuts on focusin event
+          jcnv.on("focusin",function(){isUserUsingCanvas=true;});
+          //disable yags draw keyboard shortcuts on focusout event
+          jcnv.on("focusout",function(){isUserUsingCanvas=false;});
 
           importgraph();
           sketch.fill(fillcolor);
@@ -218,31 +238,36 @@
 
 
         function mousePressedListener(){
-          for(var i =0;i<num;i++){
-            if( sketch.sq(sketch.mouseX-cx-x[i]/theScale) + sketch.sq(sketch.mouseY-cy-y[i]/theScale) <= 100)
-              sel=i;
-          }
-          if(sel<0){
-            move=true;
-            mx0=sketch.mouseX;
-            my0=sketch.mouseY;
+          if(isUserUsingCanvas){
+            for(var i =0;i<num;i++){
+              if( sketch.sq(sketch.mouseX-cx-x[i]/theScale) + sketch.sq(sketch.mouseY-cy-y[i]/theScale) <= 100)
+                sel=i;
+            }
+            if(sel<0){
+              move=true;
+              mx0=sketch.mouseX;
+              my0=sketch.mouseY;
+            }
           }
         }
 
         function mouseReleasedListener(){
-          sel=-1;
-          move=false;
+          if(isUserUsingCanvas){
+            sel=-1;
+            move=false;
+          }
         }
 
         function mouseWheelListener(event) {
-          var scale1;
-          var e = event.deltaY/50;
-          
-          scale1=theScale/sketch.pow(deltascale,e);
-          cx=sketch.mouseX-(sketch.mouseX-cx)*(theScale/scale1);
-          cy=sketch.mouseY-(sketch.mouseY-cy)*(theScale/scale1);
-          theScale=scale1;
-
+          if(isUserUsingCanvas){
+            var scale1;
+            var e = event.deltaY/50;
+            
+            scale1=theScale/sketch.pow(deltascale,e);
+            cx=sketch.mouseX-(sketch.mouseX-cx)*(theScale/scale1);
+            cy=sketch.mouseY-(sketch.mouseY-cy)*(theScale/scale1);
+            theScale=scale1;
+          }
         }
 
         function forceDynamics(){
@@ -448,33 +473,35 @@
 
 
         sketch.keyReleased=function(){
-           switch(sketch.key){
-              case 'd':
-              case 'D':
-                dynamics=!dynamics;
-                 break;
-              case 'l':
-              case 'L':
-                labels=!labels;
-                radius=mradius-radius;
-                break;
-              case 'f':
-              case 'F':
-                fit=true;
-                break;
-              case 'r':
-              case 'R':
-                repulsion=!repulsion;
-                break;
-              case 'h':
-              case 'H':
-                help=!help;
-                break;
-              case 's':
-              case 'S':
-                exportgraph();
-                break;
-           } 
+           if(isUserUsingCanvas){
+              switch(sketch.key){
+                case 'd':
+                case 'D':
+                  dynamics=!dynamics;
+                   break;
+                case 'l':
+                case 'L':
+                  labels=!labels;
+                  radius=mradius-radius;
+                  break;
+                case 'f':
+                case 'F':
+                  fit=true;
+                  break;
+                case 'r':
+                case 'R':
+                  repulsion=!repulsion;
+                  break;
+                case 'h':
+                case 'H':
+                  help=!help;
+                  break;
+                case 's':
+                case 'S':
+                  exportgraph();
+                  break;
+             }//end switch
+           }//end if            
         }
     };
 
