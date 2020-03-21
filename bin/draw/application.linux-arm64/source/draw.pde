@@ -236,8 +236,7 @@ void posiciones(){
   } 
 }
 
-void importgraph(){  
-   print(filename);
+void importgraph(){     
    String[] lines = loadStrings(filename);
    String[] parts, subparts;
    num=int(lines[0]);

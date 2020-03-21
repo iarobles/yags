@@ -1,5 +1,4 @@
-<html>
-<head>
+
   <style type="text/css">
     .yags-draw-container canvas{
       border:1px solid black;
@@ -10,18 +9,9 @@
       display: block;
     }
   </style>
-</head>
-<body>
+
 <div id="id-template" class="yags-draw-container">
 </div>
-<!--
-<script src="//cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.js"></script>
-<script
-  src="https://code.jquery.com/jquery-3.4.1.slim.min.js"
-  integrity="sha256-pasqAKBDmFT4eHoN2ndd6lN370kFiGUFyTiUHWhU7k8="
-  crossorigin="anonymous">
-</script>
--->
 <script>
 
   require.config({
@@ -34,7 +24,8 @@
 
     const s = function( sketch ) {              
         var ID_YAGS_DRAW_CONTAINER;
-        var ID_YAGS_DRAW_CANVAS;
+        var ID_YAGS_DRAW_CANVAS;        
+        var lines=`YAGSTOKEN_RAW_GRAPH`;
         var filename = "drawgraph";
         var extFilename = "raw";
         var x;
@@ -97,16 +88,16 @@
         var fit=false;
         var move=false;
         var mx0,my0;
+        var colors;
         var helpstring=" H - toggle this help message\n F - fit graph into window\n L - toggle labels on/off\n D - toggle dynamics on/off\n R - toggle repulsion on/off\n S - save\n";
-
-        var lines;
         var isUserUsingCanvas=false;
            
         sketch.preload=function(){
-           ID_YAGS_DRAW_CONTAINER = new Date().getTime();//generate a unique id for container
+           ID_YAGS_DRAW_CONTAINER = (Date.now().toString(36) + Math.random().toString(36).substr(2, 5)).toUpperCase();//generate a unique id for container
            ID_YAGS_DRAW_CANVAS="canvas"+ID_YAGS_DRAW_CONTAINER; //generate a unique id for canvas tag
-           sketch.select("#id-template").id(ID_YAGS_DRAW_CONTAINER); //replace current container id                      
-           lines = sketch.loadStrings(filename + "." + extFilename); //read the graph raw           
+           sketch.select("#id-template").id(ID_YAGS_DRAW_CONTAINER); //replace current container id          
+           //split lines of the graph raw handling mac/windows/linux endings
+           lines=lines.replace(/\r\n/g, '\r').replace(/\n/g, '\r').split(/\r/);           
         };
 
         sketch.setup=function(){
@@ -129,7 +120,7 @@
           //           to enable/disable keyboard shortcuts.
           jcnv.attr("tabindex","1");
           //disable/enable jupiter keyboard shortcuts when this canvas triggers focusin/focusout events          
-          Jupyter.keyboard_manager.register_events();
+          Jupyter.keyboard_manager.register_events($("#"+ID_YAGS_DRAW_CANVAS));
           //enable yags draw keyboard shortcuts on focusin event
           jcnv.on("focusin",function(){isUserUsingCanvas=true;});
           //disable yags draw keyboard shortcuts on focusout event
@@ -509,6 +500,3 @@
 
   });
 </script>
-</body>
-</html>
-

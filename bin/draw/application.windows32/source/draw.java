@@ -254,8 +254,7 @@ public void posiciones(){
   } 
 }
 
-public void importgraph(){  
-   print(filename);
+public void importgraph(){     
    String[] lines = loadStrings(filename);
    String[] parts, subparts;
    num=PApplet.parseInt(lines[0]);

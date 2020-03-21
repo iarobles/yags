@@ -236,11 +236,13 @@ function(G,VertexColoringRecord)
 end);
 InstallOtherMethod(Draw,"for graphs",true,[Graphs,IsRecord,IsRecord],0,
 function(G,VertexColoringRecord, EdgeColoringRecord)
-    local filename,dir,opts,template;
+    local filename,dir,opts,template,rawGraph;
     filename:="drawgraph.raw";
     GraphToRaw(filename,G,VertexColoringRecord,EdgeColoringRecord);
     if YAGSInfo.IsOnJupiter then                
-      template:=ReadAll(InputTextFile(Concatenation(YAGSInfo.Directory,"/bin/draw/p5js/draw-template.html")));            
+      template:=ReadAll(InputTextFile(Concatenation(YAGSInfo.Directory,"/bin/draw/p5js/draw-template.html"))); 
+      rawGraph:=ReadAll(InputTextFile(filename));
+      template:=ReplacedString(template,"YAGSTOKEN_RAW_GRAPH",rawGraph);        
       return Objectify( EvalString("JupyterRenderableType"), 
                         rec(
                            source:= "gap",
